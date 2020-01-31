@@ -17,16 +17,16 @@ import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
 import javax.xml.ws.Holder
 
-class Downloader(private val isp: Provider, private val dumpFormatVersion: String) {
+class Downloader(private val provider: Provider, private val dumpFormatVersion: String) {
     private val dateFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
 
     private val service = OperatorRequestService()
-    private val requestFile = File("${isp.workDir}/request.xml")
-    private val signedRequestFile = File("${isp.workDir}/request.bin")
-    private val certFile = File("${isp.workDir}/provider.pem")
+    private val requestFile = File("${provider.workDir}/request.xml")
+    private val signedRequestFile = File("${provider.workDir}/request.bin")
+    private val certFile = File("${provider.workDir}/provider.pem")
 
-    private val logger = Logger.getLogger(isp.name)
-    private val mailer = Mailer(isp.mto, isp.mfrom, isp.mserver)
+    private val logger = Logger.getLogger(provider.name)
+    private val mailer = Mailer(provider)
 
     private fun makeRequestFile() {
         val requestTime = dateFormatter.format(Date())
@@ -37,16 +37,16 @@ class Downloader(private val isp: Provider, private val dumpFormatVersion: Strin
                     appendChild(createTextNode(requestTime))
                 })
                 appendChild(createElement("operatorName").apply {
-                    appendChild(createTextNode(isp.name))
+                    appendChild(createTextNode(provider.name))
                 })
                 appendChild(createElement("inn").apply {
-                    appendChild(createTextNode(isp.inn))
+                    appendChild(createTextNode(provider.inn))
                 })
                 appendChild(createElement("ogrn").apply {
-                    appendChild(createTextNode(isp.ogrn))
+                    appendChild(createTextNode(provider.ogrn))
                 })
                 appendChild(createElement("email").apply {
-                    appendChild(createTextNode(isp.email))
+                    appendChild(createTextNode(provider.email))
                 })
                 xmlStandalone = true
             }
@@ -101,7 +101,7 @@ class Downloader(private val isp: Provider, private val dumpFormatVersion: Strin
         return when (resultCode.value) {
             1 -> {
                 logger.log(Level.INFO, "Success! Saving archive")
-                File("${isp.workDir}/archives/${isp.inn}-${dateFormatter.format(Date())}").writeBytes(archive.value!!)
+                File("${provider.workDir}/archives/${provider.inn}-${dateFormatter.format(Date())}").writeBytes(archive.value!!)
                 mailer.sendReport(isSuccessful.value, operatorName.value!!)
                 true
             }

@@ -11,6 +11,7 @@ fun main(args: Array<String>) {
     LogManager.getLogManager().readConfiguration(FileInputStream("logging.properties"))
     val configs = Configurator("configs/")
     val providers = configs.getProvidersList()
+    val logger = Logger.getLogger("INIT")
 
     if (args.isNotEmpty())
         if (args[0] == "--init") {
@@ -19,9 +20,10 @@ fun main(args: Array<String>) {
         }
 
     if (providers.isEmpty()) {
-        Logger.getLogger("INIT").log(Level.WARNING, "Cant find provider configurations")
+        logger.log(Level.WARNING, "Cant find provider configurations")
         return
     }
+    logger.log(Level.INFO, "INIT")
 
 
     //FIXME: Watcher бывает отключается при нехватке памяти

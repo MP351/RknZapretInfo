@@ -8,7 +8,6 @@ import java.util.*
 import java.util.logging.Level
 import java.util.regex.Pattern
 import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
 class Configurator(private val configsDirPath: String) {
     private val logger = Logger.getLogger("Configurator")

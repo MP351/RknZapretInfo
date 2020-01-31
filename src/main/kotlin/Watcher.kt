@@ -1,3 +1,5 @@
+@file:Suppress("MemberVisibilityCanBePrivate", "unused")
+
 package ru.viptec.zapretinfo.main
 
 import kotlinx.coroutines.delay
@@ -37,7 +39,7 @@ class Watcher(private val provider: Provider) {
         get() = _docVersion.value
 
     var isRunning: Boolean by Delegates.observable(false) {
-        property, oldValue, newValue ->
+        _, _, newValue ->
         if (newValue)
             runBlocking {
                 watch()
