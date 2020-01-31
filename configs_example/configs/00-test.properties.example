@@ -1,0 +1,14 @@
+# Variables for make request.xml
+#name=ООО "Рога и копыта"
+#inn=0123456789
+#ogrn=0123456789101
+#email=info@hornsnhoof.com
+
+# Directory where all data will be stored
+# .pem files should be here
+#workDir=hornsnhoof
+
+# Email settings
+#mserver=mail.hornsnhoof.com
+#mto="info@hornsnhoof.com,second@hornsnhoof.com,third@hornsnhoof.com"
+#mfrom=blocklist@hornsnhoof.com
