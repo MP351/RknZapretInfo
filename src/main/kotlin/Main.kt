@@ -27,6 +27,7 @@ fun main(args: Array<String>) {
 
 
     //FIXME: Watcher бывает отключается при нехватке памяти
+    //FIXME: Добавить обработку web ошибок возвращаемых сервисом
     runBlocking {
         providers.forEach {
             launch {

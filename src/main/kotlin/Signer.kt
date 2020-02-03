@@ -10,8 +10,8 @@ import java.security.cert.X509Certificate
 
 class Signer {
 //    private val bcProvider = BouncyCastleProvider()
-    private val keyStoreFile = File("crt/viptec_rkn.pkcs12")
-    private val keyStorePassword = "123"
+    private val keyStoreFile = File("")
+    private val keyStorePassword = ""
     private lateinit var keyStore: KeyStore
 
     val keys = HashMap<String, Key>()

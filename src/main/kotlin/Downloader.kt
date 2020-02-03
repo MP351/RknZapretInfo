@@ -61,12 +61,20 @@ class Downloader(private val provider: Provider, private val dumpFormatVersion: 
         }
     }
 
-    private suspend fun signFile() {
+    //FIXME: Проблемы в процессе подписания
+    private suspend fun signFile(): Boolean {
+        if (!certFile.exists()) {
+            logger.log(Level.WARNING, "Отсутствует файл подписи ${certFile.absolutePath}. Следующая попытка через 1 минуту")
+            return false
+        }
+
         //TODO: Переписать с использованием BouncyCastle
         withContext(Dispatchers.IO) {
-            Runtime.getRuntime()
+            val p = Runtime.getRuntime()
                 .exec("openssl smime -sign -in ${requestFile.absolutePath} -out ${signedRequestFile.absolutePath} -signer ${certFile.absolutePath} -outform DER -nodetach")
+            logger.log(Level.WARNING, String(p.errorStream.readBytes()))
         }
+        return true
     }
 
     private fun sendRequest(): String {
@@ -115,7 +123,8 @@ class Downloader(private val provider: Provider, private val dumpFormatVersion: 
 
     suspend fun download(): Boolean {
         makeRequestFile()
-        signFile()
+        if (!signFile())
+            return false
         return when (val code = sendRequest()) {
             "" -> false
             else -> {

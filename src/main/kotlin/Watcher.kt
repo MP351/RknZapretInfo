@@ -53,16 +53,33 @@ class Watcher(private val provider: Provider) {
                     delay(refreshPeriod)
                     continue
                 }
-                if (Downloader(provider, dumpFormatVersion ?: "3.0").download())
-                    lastDumpDateFile.writeText(lastActualDumpDate.coerceAtLeast(lastActualUrgentDumpDate).toString())
+                try {
+                    if (Downloader(provider, dumpFormatVersion ?: "3.0").download())
+                        lastDumpDateFile.writeText(lastActualDumpDate.coerceAtLeast(lastActualUrgentDumpDate).toString())
+                } catch (ex: Throwable) {
+                    logger.log(Level.WARNING, ex.message, ex)
+                }
+                delay(refreshPeriod)
         }
     }
 
     private fun refreshServiceData() {
-        service.operatorRequestPort.getLastDumpDateEx(_lastActualDumpDate, _lastDumpDateUrgently, _webServiceVersion, _dumpFormatVersion, _docVersion)
-        logger.log(
-            Level.INFO, "getLastDumpDate result: Ldd: ${_lastActualDumpDate.value}, Lddu: ${_lastActualDumpDate.value}. " +
-                    "Current: ${getLastDumpDate()}")
+        try {
+            service.operatorRequestPort.getLastDumpDateEx(
+                _lastActualDumpDate,
+                _lastDumpDateUrgently,
+                _webServiceVersion,
+                _dumpFormatVersion,
+                _docVersion
+            )
+            logger.log(
+                Level.INFO,
+                "getLastDumpDate result: Ldd: ${_lastActualDumpDate.value}, Lddu: ${_lastActualDumpDate.value}. " +
+                        "Current: ${getLastDumpDate()}"
+            )
+        } catch (ex: Throwable) {
+            logger.log(Level.WARNING, "", ex)
+        }
     }
 
     private fun getLastDumpDate(): Long {
