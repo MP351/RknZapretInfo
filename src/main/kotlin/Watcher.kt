@@ -15,8 +15,9 @@ import kotlin.properties.Delegates
 class Watcher(private val provider: Provider) {
     private val service = OperatorRequestService()
     private val lastDumpDateFile = File("${provider.workDir}/lastDumpDate")
-    private val logger = Logger.getLogger("Watcher of ${provider.name}")
+    private val logger = CustomLogger.getLogger(provider)
     private val refreshPeriod = TimeUnit.MINUTES.toMillis(1)
+    private val mailer = Mailer(provider)
 
     private val _lastActualDumpDate: Holder<Long?> = Holder()
     val lastActualDumpDate: Long
@@ -54,10 +55,11 @@ class Watcher(private val provider: Provider) {
                     continue
                 }
                 try {
-                    if (Downloader(provider, dumpFormatVersion ?: "3.0").download())
+                    if (Downloader(provider, dumpFormatVersion ?: "3.0", service, mailer).download())
                         lastDumpDateFile.writeText(lastActualDumpDate.coerceAtLeast(lastActualUrgentDumpDate).toString())
                 } catch (ex: Throwable) {
                     logger.log(Level.WARNING, ex.message, ex)
+                    mailer.sendMessage("Неудачная выгрузка от ${provider.name}", "Сбой в работе сервиса\n${ex.message.toString()}")
                 }
                 delay(refreshPeriod)
         }
@@ -74,11 +76,12 @@ class Watcher(private val provider: Provider) {
             )
             logger.log(
                 Level.INFO,
-                "getLastDumpDate result: Ldd: ${_lastActualDumpDate.value}, Lddu: ${_lastActualDumpDate.value}. " +
-                        "Current: ${getLastDumpDate()}"
+                "getLastDumpDate: ldd: ${_lastActualDumpDate.value}, lddu: ${_lastActualDumpDate.value}. " +
+                        "current: ${getLastDumpDate()}"
             )
         } catch (ex: Throwable) {
-            logger.log(Level.WARNING, "", ex)
+            logger.log(Level.WARNING, ex.message, ex)
+            mailer.sendMessage("Неудачная выгрузка от ${provider.name}", "Сбой в работе сервиса\n${ex.message.toString()}")
         }
     }
 

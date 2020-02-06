@@ -5,12 +5,16 @@ import java.io.FileFilter
 import java.lang.Exception
 import java.nio.charset.Charset
 import java.util.*
+import java.util.logging.FileHandler
 import java.util.logging.Level
+import java.util.logging.Logger
 import java.util.regex.Pattern
 import kotlin.collections.ArrayList
 
 class Configurator(private val configsDirPath: String) {
-    private val logger = Logger.getLogger("Configurator")
+    private val logger = Logger.getLogger("Configurator").apply {
+        addHandler(FileHandler("logs/rzi.log"))
+    }
     private val workDirsPrefix = "operators"
 
     fun getProvidersList(): List<Provider> {

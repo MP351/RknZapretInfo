@@ -17,16 +17,14 @@ import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
 import javax.xml.ws.Holder
 
-class Downloader(private val provider: Provider, private val dumpFormatVersion: String) {
+class Downloader(private val provider: Provider, private val dumpFormatVersion: String, private val service: OperatorRequestService, private val mailer: Mailer) {
     private val dateFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
 
-    private val service = OperatorRequestService()
     private val requestFile = File("${provider.workDir}/request.xml")
     private val signedRequestFile = File("${provider.workDir}/request.bin")
     private val certFile = File("${provider.workDir}/provider.pem")
 
-    private val logger = Logger.getLogger(provider.name)
-    private val mailer = Mailer(provider)
+    private val logger = CustomLogger.getLogger(provider)
 
     private fun makeRequestFile() {
         val requestTime = dateFormatter.format(Date())
@@ -61,20 +59,26 @@ class Downloader(private val provider: Provider, private val dumpFormatVersion: 
         }
     }
 
-    //FIXME: Проблемы в процессе подписания
     private suspend fun signFile(): Boolean {
         if (!certFile.exists()) {
-            logger.log(Level.WARNING, "Отсутствует файл подписи ${certFile.absolutePath}. Следующая попытка через 1 минуту")
+            logger.log(Level.WARNING, "Отсутствует файл подписи ${certFile.canonicalPath}. Следующая попытка через 1 минуту")
+            mailer.sendMessage("Неудачная выгрузка от ${provider.name}", "Отсутствует файл подписи")
             return false
         }
 
         //TODO: Переписать с использованием BouncyCastle
-        withContext(Dispatchers.IO) {
+        return withContext(Dispatchers.IO) {
             val p = Runtime.getRuntime()
                 .exec("openssl smime -sign -in ${requestFile.absolutePath} -out ${signedRequestFile.absolutePath} -signer ${certFile.absolutePath} -outform DER -nodetach")
-            logger.log(Level.WARNING, String(p.errorStream.readBytes()))
+            val errors = p.errorStream.readBytes()
+            if (errors.isNotEmpty()) {
+                logger.log(Level.WARNING, String(errors))
+                mailer.sendMessage("Неудачная выгрузка от ${provider.name}", "Ошибки в процессе подписания запроса\n ${String(errors)}")
+                return@withContext false
+            } else {
+                return@withContext true
+            }
         }
-        return true
     }
 
     private fun sendRequest(): String {
@@ -86,7 +90,7 @@ class Downloader(private val provider: Provider, private val dumpFormatVersion: 
             requestFile.readBytes(), signedRequestFile.readBytes(), dumpFormatVersion,
             isSuccess, resultComment, archiveCode
         )
-        logger.log(Level.INFO, "sendRequest result: ${isSuccess.value}, ${resultComment.value}")
+        logger.log(Level.INFO, "sendRequest: ${resultComment.value}")
         return archiveCode.value ?: ""
     }
 
@@ -109,12 +113,15 @@ class Downloader(private val provider: Provider, private val dumpFormatVersion: 
         return when (resultCode.value) {
             1 -> {
                 logger.log(Level.INFO, "Success! Saving archive")
-                File("${provider.workDir}/archives/${provider.inn}-${dateFormatter.format(Date())}").writeBytes(archive.value!!)
+                archive.value?.let {
+                    File("${provider.workDir}/archives/out.zip").writeBytes(it)
+                }
+//                File("${provider.workDir}/archives/${provider.inn}-${dateFormatter.format(Date())}").writeBytes(archive.value!!)
                 mailer.sendReport(isSuccessful.value, operatorName.value!!)
                 true
             }
             else -> {
-                logger.log(Level.INFO, "Fail. ${comment.value}")
+                logger.log(Level.WARNING, "Fail. ${comment.value}")
                 mailer.sendReport(isSuccessful.value, operatorName.value!!)
                 false
             }

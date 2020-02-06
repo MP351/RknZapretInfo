@@ -1,19 +1,22 @@
 package ru.viptec.zapretinfo.main
 
 import java.util.*
+import java.util.logging.FileHandler
 import java.util.logging.Level
 import java.util.logging.Logger
+import java.util.logging.SimpleFormatter
 import javax.mail.Message
 import javax.mail.MessagingException
 import javax.mail.Session
 import javax.mail.internet.InternetAddress
 import javax.mail.internet.MimeMessage
 
-class Logger {
-    //TODO: логгирование в разные файлы в зависимости от класса/провайдера
+class CustomLogger {
     companion object {
-        fun getLogger(opName: String): Logger {
-            return Logger.getLogger(opName)
+        fun getLogger(provider: Provider): Logger {
+            return Logger.getLogger(provider.name).apply {
+                addHandler(FileHandler("${provider.workDir}/logs/watcher.log"))
+            }
         }
     }
 }

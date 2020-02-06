@@ -4,14 +4,18 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.io.FileInputStream
+import java.util.logging.FileHandler
 import java.util.logging.Level
 import java.util.logging.LogManager
+import java.util.logging.Logger
 
 fun main(args: Array<String>) {
     LogManager.getLogManager().readConfiguration(FileInputStream("logging.properties"))
     val configs = Configurator("configs/")
     val providers = configs.getProvidersList()
-    val logger = Logger.getLogger("INIT")
+    val logger = Logger.getLogger("INIT").apply {
+        addHandler(FileHandler("logs/rzi.log"))
+    }
 
     if (args.isNotEmpty())
         if (args[0] == "--init") {
@@ -26,8 +30,6 @@ fun main(args: Array<String>) {
     logger.log(Level.INFO, "INIT")
 
 
-    //FIXME: Watcher бывает отключается при нехватке памяти
-    //FIXME: Добавить обработку web ошибок возвращаемых сервисом
     runBlocking {
         providers.forEach {
             launch {
@@ -43,5 +45,6 @@ fun createFolders(providers: List<Provider>) {
 
     providers.forEach {
         File("${it.workDir}/archives").mkdirs()
+        File("${it.workDir}/logs").mkdirs()
     }
 }
