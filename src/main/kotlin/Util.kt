@@ -4,7 +4,6 @@ import java.util.*
 import java.util.logging.FileHandler
 import java.util.logging.Level
 import java.util.logging.Logger
-import java.util.logging.SimpleFormatter
 import javax.mail.Message
 import javax.mail.MessagingException
 import javax.mail.Session
@@ -62,7 +61,7 @@ class Mailer(private val provider: Provider) {
                 sendMessage(msg, msg.allRecipients)
             }.close()
         } catch (ex: MessagingException) {
-            logger.log(Level.INFO, "Mailer", ex)
+            logger.log(Level.INFO, ex.message, ex)
         }
     }
 }
