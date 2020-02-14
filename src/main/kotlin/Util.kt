@@ -13,9 +13,7 @@ import javax.mail.internet.MimeMessage
 class CustomLogger {
     companion object {
         fun getLogger(provider: Provider): Logger {
-            return Logger.getLogger(provider.name).apply {
-                addHandler(FileHandler("${provider.workDir}/logs/watcher.log"))
-            }
+            return Logger.getLogger(provider.name)
         }
     }
 }

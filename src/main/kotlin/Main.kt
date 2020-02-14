@@ -1,7 +1,9 @@
 package ru.viptec.zapretinfo.main
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileInputStream
 import java.util.logging.FileHandler
@@ -33,6 +35,11 @@ fun main(args: Array<String>) {
     runBlocking {
         providers.forEach {
             launch {
+                withContext(Dispatchers.IO) {
+                    CustomLogger.getLogger(provider = it).apply {
+                        addHandler(FileHandler("${it.workDir}/logs/watcher.log", 5_120_000, 10, true))
+                    }
+                }
                 Watcher(it).isRunning = true
             }
         }
